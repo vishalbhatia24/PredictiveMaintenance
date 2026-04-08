@@ -2,7 +2,7 @@ name: Machine Data Simulation
 
 on:
   schedule:
-    - cron: "*/1 * * * *"   # runs every 1 minutes
+    - cron: "*/1 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -13,19 +13,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # ✅ Install SQL Server ODBC Driver
       - name: Install ODBC Driver
         run: |
           sudo apt-get update
-          sudo apt-get install -y unixodbc-dev
+          sudo apt-get install -y curl apt-transport-https gnupg
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17
 
+      # ✅ Setup Python
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: '3.10'
 
+      # ✅ Install Python packages
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # ✅ Run your script
       - name: Run script
         env:
           DB_SERVER: ${{ secrets.DB_SERVER }}
