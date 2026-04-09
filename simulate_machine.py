@@ -10,9 +10,15 @@ database = os.environ['DB_NAME']
 username = os.environ['DB_USER']
 password = os.environ['DB_PASS']
 
-conn = pyodbc.connect(
-    f'DRIVER={{ODBC Driver 17 for SQL Server}};'
-    f'SERVER={server};DATABASE={database};UID={username};PWD={password}'
+    conn = pyodbc.connect(
+    "DRIVER={ODBC Driver 17 for SQL Server};"
+    "SERVER=your-server-name.database.windows.net,1433;"
+    "DATABASE=MachineDB;"
+    "UID=yourusername;"
+    "PWD=yourpassword;"
+    "Encrypt=yes;"
+    "TrustServerCertificate=no;"
+    "Connection Timeout=30;"
 )
 
 cursor = conn.cursor()
