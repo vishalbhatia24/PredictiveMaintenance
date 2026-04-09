@@ -1,5 +1,5 @@
-pip! install pyodbc
-pip! install random
+pip install pyodbc
+pip install random
 import pyodbc
 import random
 from datetime import datetime
