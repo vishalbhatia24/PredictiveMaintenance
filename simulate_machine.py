@@ -1,21 +1,21 @@
 import pyodbc
 import random
 from datetime import datetime
-
-# Use environment variables (IMPORTANT)
 import os
 
+# Load from environment variables (GitHub Secrets)
 server = os.environ['DB_SERVER']
 database = os.environ['DB_NAME']
 username = os.environ['DB_USER']
 password = os.environ['DB_PASS']
 
-    conn = pyodbc.connect(
-    "DRIVER={ODBC Driver 17 for SQL Server};"
-    "SERVER=your-server-name.database.windows.net,1433;"
-    "DATABASE=MachineDB;"
-    "UID=yourusername;"
-    "PWD=yourpassword;"
+# Create connection
+conn = pyodbc.connect(
+    f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+    f"SERVER={server};"
+    f"DATABASE={database};"
+    f"UID={username};"
+    f"PWD={password};"
     "Encrypt=yes;"
     "TrustServerCertificate=no;"
     "Connection Timeout=30;"
@@ -40,25 +40,33 @@ def check_failure(temp, vibration):
     else:
         return "LOW RISK", "Normal"
 
-# Generate one record per run
-m = random.choice(machines)
-data = generate_data()
+try:
+    # Generate data
+    m = random.choice(machines)
+    data = generate_data()
 
-cursor.execute("""
-    INSERT INTO MachineSensorData (MachineId, Temperature, Vibration, Pressure)
-    VALUES (?, ?, ?, ?)
-""", m, data["temp"], data["vibration"], data["pressure"])
-
-risk, msg = check_failure(data["temp"], data["vibration"])
-
-if risk != "LOW RISK":
+    # Insert sensor data
     cursor.execute("""
-        INSERT INTO MachineAlerts (MachineId, AlertMessage, RiskLevel)
-        VALUES (?, ?, ?)
-    """, m, msg, risk)
+        INSERT INTO MachineSensorData (MachineId, Temperature, Vibration, Pressure)
+        VALUES (?, ?, ?, ?)
+    """, m, data["temp"], data["vibration"], data["pressure"])
 
-conn.commit()
-cursor.close()
-conn.close()
+    # Check risk
+    risk, msg = check_failure(data["temp"], data["vibration"])
 
-print("Data inserted successfully!")
+    # Insert alert if needed
+    if risk != "LOW RISK":
+        cursor.execute("""
+            INSERT INTO MachineAlerts (MachineId, AlertMessage, RiskLevel)
+            VALUES (?, ?, ?)
+        """, m, msg, risk)
+
+    conn.commit()
+    print("Data inserted successfully!")
+
+except Exception as e:
+    print("Error:", e)
+
+finally:
+    cursor.close()
+    conn.close()
